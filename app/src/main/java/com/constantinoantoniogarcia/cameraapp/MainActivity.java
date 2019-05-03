@@ -28,12 +28,13 @@ import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity {
 
+
     static final int REQUEST_IMAGE_CAPTURE = 1;
     private TensorFlowClassifier classifier;
-    private static final String modelFile = "opt_mnist_convnet-keras.pb";
+    private static final String modelFile = "opt_Melanoma_NotMelanomaProtBuf.pb";//CAMBIAR
     private static final String inputTensorName = "conv2d_1_input";
-    private static int pixelWidth = 28;
-    private static final String outputTensorName = "dense_2/Softmax";
+    private static int pixelWidth = 224;
+    private static final String outputTensorName = "dense_2/Sigmoid";
     private static final String labelsFile = "labels.txt";
 
     private Bitmap scaledBitmap;
@@ -74,8 +75,8 @@ public class MainActivity extends AppCompatActivity {
         );
 
 
-        bitmapIntPixels = new int[pixelWidth * pixelWidth];
-        bitmapPixels = new float[pixelWidth * pixelWidth];
+        bitmapIntPixels = new int[pixelWidth * pixelWidth*3];
+        bitmapPixels = new float[pixelWidth * pixelWidth*3];
 
         try {
             classifier = TensorFlowClassifier.create(getAssets(), "TensorFlow NNet",
@@ -88,8 +89,8 @@ public class MainActivity extends AppCompatActivity {
 
 
     }
-
-    public Bitmap toGrayscale(Bitmap bmpOriginal) {
+//puede desaparecer porque es para convertir a gris la foto que tomas
+   /* public Bitmap toGrayscale(Bitmap bmpOriginal) {
         int width, height;
         height = bmpOriginal.getHeight();
         width = bmpOriginal.getWidth();
@@ -118,21 +119,21 @@ public class MainActivity extends AppCompatActivity {
 
         c.drawBitmap(bmpOriginal, 0, 0, paint);
         return bmpGrayscale;
-    }
+    }*/
 
     private void bitmapToPixels(Bitmap bitmap) {
-        scaledBitmap = toGrayscale(
-                Bitmap.createScaledBitmap(bitmap, pixelWidth, pixelWidth, true)
-        );
+        scaledBitmap = Bitmap.createScaledBitmap(bitmap, pixelWidth, pixelWidth, true);
         scaledBitmap.getPixels(bitmapIntPixels, 0, scaledBitmap.getWidth(), 0, 0,
                 scaledBitmap.getWidth(), scaledBitmap.getHeight());
 
         System.out.println("========================================");
-        for (int i = 0; i < bitmapIntPixels.length; ++i) {
+        for (int i = 0; i < pixelWidth*pixelWidth; ++i) {//MODIFICAR a pixel por pixel
             final int val = bitmapIntPixels[i];
             // bitmapIntPixels[i] = (val & 0xFF);
-            bitmapPixels[i] = ((val & 0xFF)) / 255.0F;
-            System.out.println("===>" + Integer.toString(i) + ", " +Double.toString(bitmapPixels[i]));
+            bitmapPixels[3 * i ] = Color.blue(val)/255;
+            bitmapPixels[3 * i + 1] = Color.green(val)/255;
+            bitmapPixels[3 * i + 2] = Color.red(val)/255;
+
             // https://stackoverflow.com/questions/48017924/how-to-get-android-pixel-rgb-array-for-keras-model
             //bitmapPixels[i * 3 + 1] = Color.green(val);
             //bitmapPixels[i * 3 + 2] = Color.blue(val);
@@ -151,6 +152,7 @@ public class MainActivity extends AppCompatActivity {
 
             // crops and generates the pixels from the bitmap. The result is in bitmapPixels
             bitmapToPixels(imageBitmap);
+            //System.out.println(imageBitmap);
             imageView.setImageBitmap(scaledBitmap);
 
             final ClassificationResult res = classifier.recognize(bitmapPixels);

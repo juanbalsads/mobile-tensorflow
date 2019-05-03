@@ -36,7 +36,7 @@ public class TensorFlowClassifier implements Classifier {
         int numClasses = classifier.labels.size();
         classifier.tfHelper = new TensorFlowInferenceInterface(assetManager, modelPath);
         classifier.inputSize = inputSize;
-        classifier.output = new float[numClasses];
+       // classifier.output = new float[numClasses]; para una salida
         classifier.feedKeepProb = feedKeepProb;
 
         return classifier;
@@ -61,8 +61,9 @@ public class TensorFlowClassifier implements Classifier {
     }
 
     @Override
+    //MODIFICAR
     public ClassificationResult recognize(float[] pixels) {
-        tfHelper.feed(inputName, pixels, 1, inputSize, inputSize, 1);
+        tfHelper.feed(inputName, pixels, 1, inputSize, inputSize, 3);//ya esta modificado
 
         tfHelper.run(outputNames);
 
