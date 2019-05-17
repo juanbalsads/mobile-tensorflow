@@ -36,7 +36,7 @@ public class TensorFlowClassifier implements Classifier {
         int numClasses = classifier.labels.size();
         classifier.tfHelper = new TensorFlowInferenceInterface(assetManager, modelPath);
         classifier.inputSize = inputSize;
-       // classifier.output = new float[numClasses]; para una salida
+        classifier.output = new float[numClasses];
         classifier.feedKeepProb = feedKeepProb;
 
         return classifier;
