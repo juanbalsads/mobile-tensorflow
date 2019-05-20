@@ -14,16 +14,16 @@ public class TensorFlowClassifier implements Classifier {
     private String name; // name of the classifier
     private List<String> labels; // all possible predictions from the classifier
     private int inputSize;
+    private int nChannels;
     private String inputName;
     private String outputName;
     private String[] outputNames;
     private float[] output;
-    private boolean feedKeepProb;
     private TensorFlowInferenceInterface tfHelper;
 
     public static TensorFlowClassifier create(AssetManager assetManager, String name,
                                               String modelPath, String labelFile,
-                                              int inputSize, String inputName, String outputName,
+                                              int inputSize, int nChannels, String inputName, String outputName,
                                               boolean feedKeepProb) throws IOException {
         //intialize a classifier
         TensorFlowClassifier classifier = new TensorFlowClassifier();
@@ -33,11 +33,10 @@ public class TensorFlowClassifier implements Classifier {
         classifier.outputName = outputName;
         classifier.outputNames = new String[] {outputName};
         classifier.labels = readLabels(assetManager, labelFile);
-        int numClasses = classifier.labels.size();
         classifier.tfHelper = new TensorFlowInferenceInterface(assetManager, modelPath);
         classifier.inputSize = inputSize;
-        classifier.output = new float[numClasses];
-        classifier.feedKeepProb = feedKeepProb;
+        classifier.nChannels = nChannels;
+        classifier.output = new float[1]; // 1 Since we use a Sigmoid classifier
 
         return classifier;
     }
@@ -61,21 +60,25 @@ public class TensorFlowClassifier implements Classifier {
     }
 
     @Override
-    //MODIFICAR
     public ClassificationResult recognize(float[] pixels) {
-        tfHelper.feed(inputName, pixels, 1, inputSize, inputSize, 3);//ya esta modificado
+        tfHelper.feed(inputName, pixels, 1, inputSize, inputSize, nChannels);
 
         tfHelper.run(outputNames);
 
         tfHelper.fetch(outputName, output);
 
         ClassificationResult ans = new ClassificationResult();
-        for (int i = 0; i < output.length; ++i) {
-            Log.i("Classification", Integer.toString(i) + " ==> " + output[i]);
-            if (output[i] > ans.getProbability()) {
-                ans.update(output[i], labels.get(i));
-            }
+        String prediction = "";
+        float probability = 0.0F;
+        if (output[0] > 0.5) {
+            prediction = labels.get(1);
+            probability = output[0];
+        } else {
+            prediction = labels.get(0);
+            probability = 1 - output[0];
         }
+        Log.i("====> Classification", prediction + " with Pr = " + probability);
+        ans.update(probability, prediction);
 
         return ans;
     }
