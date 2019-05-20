@@ -2,12 +2,7 @@ package com.constantinoantoniogarcia.cameraapp;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.ColorMatrix;
-import android.graphics.ColorMatrixColorFilter;
-import android.graphics.Paint;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.design.widget.FloatingActionButton;
@@ -31,7 +26,7 @@ public class MainActivity extends AppCompatActivity {
 
     static final int REQUEST_IMAGE_CAPTURE = 1;
     private TensorFlowClassifier classifier;
-    private static final String modelFile = "opt_Melanoma_NotMelanomaProtBuf.pb";//CAMBIAR
+    private static final String modelFile = "opt_model.pb";
     private static final String inputTensorName = "conv2d_1_input";
     private static int pixelWidth = 224;
     private static final String outputTensorName = "dense_2/Sigmoid";
@@ -75,12 +70,12 @@ public class MainActivity extends AppCompatActivity {
         );
 
 
-        bitmapIntPixels = new int[pixelWidth * pixelWidth*3];
-        bitmapPixels = new float[pixelWidth * pixelWidth*3];
+        bitmapIntPixels = new int[pixelWidth * pixelWidth * 3];
+        bitmapPixels = new float[pixelWidth * pixelWidth * 3];
 
         try {
-            classifier = TensorFlowClassifier.create(getAssets(), "TensorFlow NNet",
-                            modelFile, labelsFile, pixelWidth, inputTensorName, outputTensorName,
+            classifier = TensorFlowClassifier.create(getAssets(), "CNN",
+                            modelFile, labelsFile, pixelWidth, 3, inputTensorName, outputTensorName,
                             true);
         } catch (IOException e) {
             e.printStackTrace();
@@ -126,21 +121,16 @@ public class MainActivity extends AppCompatActivity {
         scaledBitmap.getPixels(bitmapIntPixels, 0, scaledBitmap.getWidth(), 0, 0,
                 scaledBitmap.getWidth(), scaledBitmap.getHeight());
 
-        System.out.println("========================================");
-        for (int i = 0; i < pixelWidth*pixelWidth; ++i) {//MODIFICAR a pixel por pixel
+        int channelLength = pixelWidth * pixelWidth;
+        for (int i = 0; i < channelLength; ++i) {
             final int val = bitmapIntPixels[i];
             // bitmapIntPixels[i] = (val & 0xFF);
-            bitmapPixels[3 * i ] = Color.blue(val)/255;
-            bitmapPixels[3 * i + 1] = Color.green(val)/255;
-            bitmapPixels[3 * i + 2] = Color.red(val)/255;
-
-            // https://stackoverflow.com/questions/48017924/how-to-get-android-pixel-rgb-array-for-keras-model
-            //bitmapPixels[i * 3 + 1] = Color.green(val);
-            //bitmapPixels[i * 3 + 2] = Color.blue(val);
+            bitmapPixels[i * 3 + 2] = Color.red(val) / 255.0F;
+            bitmapPixels[i * 3 + 1] = Color.green(val) / 255.0F;
+            bitmapPixels[i * 3] = Color.blue(val) / 255.0F;
         }
         scaledBitmap.setPixels(bitmapIntPixels, 0, scaledBitmap.getWidth(), 0, 0,
                 scaledBitmap.getWidth(), scaledBitmap.getHeight());
-
     }
 
     @Override
